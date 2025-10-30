@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manual de Novedades STARK — v1</title>
+  <style>
+    :root{
+      --bg:#0f1115; --card:#151821; --muted:#9aa1b5; --text:#e8e9ee; --accent:#ffd000; --accent-2:#3dd9c0; --danger:#ff5d5d; --ok:#37c96b; --warn:#ffb020;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#0d0f14,#0f1115);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;}
+    header{position:sticky;top:0;backdrop-filter:saturate(140%) blur(8px);background:#0f1115cc;border-bottom:1px solid #232634;z-index:5}
+    .wrap{max-width:1200px;margin:0 auto;padding:18px}
+    .row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.3px}
+    .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--accent)}
+    .pill{border:1px solid #2a2e3b;border-radius:999px;padding:8px 12px;background:#151821}
+    input,select,button,textarea{color:var(--text);background:#121521;border:1px solid #232634;border-radius:10px;padding:10px 12px}
+    input::placeholder{color:#646b7c}
+    button{cursor:pointer;border:1px solid #2c3140}
+    button.primary, a.primary{background:linear-gradient(135deg,#ffd000,#ffdf60);color:#111;font-weight:700;border:none;text-decoration:none;display:inline-flex;align-items:center;border-radius:10px;padding:10px 12px}
+    button.ghost, a.ghost{background:#151821;border:1px solid #2c3140;color:var(--text);text-decoration:none;display:inline-flex;align-items:center;border-radius:10px;padding:10px 12px}
+    main{display:grid;grid-template-columns:1fr;gap:18px;max-width:1200px;margin:20px auto;padding:0 18px}
+    .section{margin:8px 0 18px}
+    .checklist label{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px;color:var(--muted)}
+    .tag{display:inline-flex;align-items:center;gap:6px;border:1px solid #2a2e3b;background:#161a24;border-radius:999px;padding:6px 10px;font-size:12px;color:#cfd2db}
+    .tag .sw{width:8px;height:8px;border-radius:50%}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    @media (max-width: 680px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid #232634;border-radius:14px;padding:14px}
+    .subtitle{color:var(--muted);font-size:12px;margin-top:2px}
+    .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .badge{font-size:11px;border:1px solid #2a2e3b;color:#cfd2db;padding:5px 8px;border-radius:999px;background:#171b25}
+    .prio-ALTA{border-color:var(--danger);color:#ffb2b2}
+    .prio-MEDIA{border-color:var(--warn);color:#ffe1a3}
+    .prio-BAJA{border-color:#2b8a6d;color:#a6f4c5}
+    .sla{font-feature-settings:"tnum" on,"lnum" on}
+    .footer{color:var(--muted);font-size:12px;margin-top:10px}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .empty{opacity:.75;border:1px dashed #2a2e3b;background:#121521;border-radius:14px;padding:20px;text-align:center}
+    .hl{background:linear-gradient(90deg,transparent,#ffd00033,transparent)}
+    .help{font-size:12px;color:#9aa1b5}
+    .searchbar{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
+
+    /* Modal */
+    #modal{position:fixed;inset:0;display:none;place-items:center;z-index:50}
+    #modal .modal-backdrop{position:absolute;inset:0;background:#0b0e14cc;backdrop-filter:blur(4px)}
+    #modal .modal-card{position:relative;width:min(860px,92vw);max-height:85vh;overflow:auto;background:#151821;border:1px solid #232634;border-radius:14px;padding:16px;box-shadow:0 20px 60px #0008}
+    #modal .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    #modal .modal-head h3{margin:0;font-size:16px}
+    #modal .modal-body{font-size:14px}
+    #modal .modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+    #modal .checklist label{display:flex;gap:8px;margin:6px 0}
+    #sopDownload{ display:none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row">
+        <div class="brand"><span class="dot"></span> Manual de Novedades <span style="opacity:.6;font-weight:600">STARK</span></div>
+      </div>
+      <div class="searchbar">
+        <input id="q" placeholder="Buscar por síntoma, categoría, sistema, responsable… (Ej: ‘torniquete’, ‘FitnessBrain’, ‘DA’)" />
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="grid" id="cards"></div>
+      <div id="empty" class="empty" style="display:none">No hay resultados con los filtros actuales.</div>
+
+      <div class="footer">© Stark Gym — Manual de Novedades • Propósito: clasificar novedades, asignar responsables y estandarizar acciones y escalamiento.</div>
+    </section>
+  </main>
+
+  <!-- Modal genérico -->
+  <div id="modal" class="modal" style="display:none">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="modalTitle"></h3>
+        <button class="ghost" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+      <div id="modalFooter" class="modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- Bloque de datos embebido -->
+  <script type="application/json" id="data">
+{
+  "sedes": ["Mazurén","Plaza Claro","Colina","Chapinero","Javeriana","Cedritos","Modelia","Well:Done"],
+  "responsables": [
+    {"id":"FB","nombre":"Equipo FitnessBrain","contacto":"martina@grupodtg.com","sla_h":6,"escala_a":"Analista Admin (Jonathan) → Proveedor TI (Andrés)","mesa_ayuda":"https://soportedtg.zohodesk.com/portal/es/home"},
+    {"id":"TI","nombre":"Equipo TI","contacto":"gerencia@w4singenieria.com", "telefono":3005371968,"sla_h":8,"escala_a":"Proveedor TI (Andrés) → Gerencia General (Freddy)","mesa_ayuda":"https://w4singenieria.com.co/"},
+    {"id":"Sede","nombre":"Gerente de Sede","contacto":"gerencia_sede@stark.com","sla_h":24,"escala_a":"Dirección Operaciones (Rael)"},
+    {"id":"MKT","nombre":"Mercadeo","contacto":"mkt@stark.com","sla_h":24,"escala_a":"Dirección Marketing (Alejandra)"},
+    {"id":"FAC","nombre":"Facturación/Contabilidad","contacto":"facturacion@stark.com","sla_h":48,"escala_a":"Coordinación Facturación"},
+    {"id":"RRHH","nombre":"Recursos Humanos","contacto":"rrhh@stark.com","sla_h":48,"escala_a":"Dirección RRHH"}
+  ],
+  "proveedores": [
+    {"id":"ISP","nombre":"Proveedor Internet (Claro/Tigo/Movistar)","categorias":["Conectividad/Internet"],"contacto":"soporte@isp.com"},
+    {"id":"TORNIQ","nombre":"Proveedor Torniquetes (Saycom/Top Control)","categorias":["Accesos/Torniquetes & Biométricos"],"contacto":"soporte@torniquetes.com"},
+    {"id":"PAYU","nombre":"PayU / Pasarela","categorias":["Pagos/DA/Pasarela"],"contacto":"soporte@payu.com"},
+    {"id":"TECHNOGYM","nombre":"Technogym / MyWellness","categorias":["Apps & Integraciones (HubSpot, MyWellness)"],"contacto":"support@technogym.com"},
+    {"id":"CCTVPRV","nombre":"Proveedor CCTV/NVR","categorias":["CCTV/NVR Cámaras"],"contacto":"cctv@proveedor.com"},
+    {"id":"HARDWARE","nombre":"Proveedor Hardware/Impresoras","categorias":["Hardware TI (PC, impresoras, POS)"],"contacto":"hardware@proveedor.com"},
+    {"id":"MANTTO","nombre":"Contratista Mantenimiento (AC/Eléctrico/Plomería)","categorias":["Infraestructura (Aire, Eléctrico, Plomería)"],"contacto":"mantenimiento@proveedor.com"},
+    {"id":"AGENCIA","nombre":"Agencia/Equipo Marketing","categorias":["Marketing/Embudos & Formularios"],"contacto":"marketing@stark.com"}
+  ],
+  "categorias": [
+    "FitnessBrain/CRM",
+    "Conectividad/Internet",
+    "Accesos/Torniquetes & Biométricos",
+    "Hardware TI (PC, impresoras, POS)",
+    "CCTV/NVR Cámaras",
+    "Infraestructura (Aire, Eléctrico, Plomería)",
+    "Pagos/DA/Pasarela",
+    "Apps & Integraciones (HubSpot, MyWellness)",
+    "Seguridad de la Información",
+    "Servicio al Cliente/Operación",
+    "Marketing/Embudos & Formularios",
+    "RRHH/Plataformas internas"
+  ],
+  "escenarios": [
+    {
+      "id":"NOTA-CREDITO",
+      "sistema":"Generar nota crédito por novedad en la factura",
+      "sintoma":"NOTA-CREDITO",
+      "causas_probables":["Reglas de distribución desactivadas","Errores en formulario HubSpot","Cambio de nombre de campo"],
+      "categoria":"FitnessBrain/CRM",
+      "prioridad":"MEDIA",
+      "responsable":"FB",
+      "area_apoyo":["FB"],
+      "acciones": [
+        "Validar en FB que la factura este generada",
+        "realizar NC",
+        "Notificar al cliente"
+      ],
+      "evidencias":["Capturas de pantalla de la novedad","Datos del cliente, cedula, correo","Notificación que le llego al cliente"],
+      "sla_h":6,
+      "escalamiento":"FB → Analista Admin (Jonathan)",
+      "sedes_afectadas":["Todas"],
+      "palabras_clave":["nota","credito","crédito"]
+    },
+    {
+      "id":"DOBLES COBROS FB",
+      "sistema":"FitnessBrain/CRM",
+      "sintoma":"DOBLES COBROS FB",
+      "causas_probables":["Reglas de distribución desactivadas","Errores en formulario HubSpot","Cambio de nombre de campo"],
+      "categoria":"Facturación",
+      "prioridad":"MEDIA",
+      "responsable":"FB",
+      "area_apoyo":["FB"],
+      "acciones": [
+        "Validar en FB que efectivamente se le haya cobro doble al cliente",
+        "Si es el casdo realizar NC a una de las facturas",
+        "Notificar al área de servicio al cliente con Laura Garzon para realizar la devolución del dinero"
+      ],
+      "evidencias":["Capturas de pantalla de FB en donde se evidencia el cobro adicional","Enviar datos del cliente, cédula, email"],
+      "sla_h":6,
+      "escalamiento":"FB → Analista Admin (Jonathan)",
+      "sedes_afectadas":["Todas"],
+      "palabras_clave":["cobros","doble","duplicados"]
+    },
+    {
+      "id":"CAIDA SERVIDOR FB",
+      "sistema":"FitnessBrain/CRM",
+      "sintoma":"CAIDA SERVIDOR FB",
+      "causas_probables":["Reglas de distribución desactivadas","Errores en formulario HubSpot","Cambio de nombre de campo"],
+      "categoria":"FitnessBrain/CRM",
+      "prioridad":"ALTA",
+      "responsable":"FB",
+      "area_apoyo":["FB"],
+      "acciones": [
+        "Notidicar de inmediato al lider",
+        "El lider reportara la novedad el equipo de FB"
+      ],
+      "evidencias":["Capturas de pantalla"],
+      "sla_h":1,
+      "escalamiento":"FB → Analista Admin (Jonathan)",
+      "sedes_afectadas":["Todas"],
+      "palabras_clave":["caida","masiva","fitnessbrain","FB","fb"]
+    },
+    {
+      "id":"INTERNET SEDE",
+      "sistema":"Fallas de acceso a internet, WiFi, VPN, configuración de redes",
+      "sintoma":"INTERMITENCIA O CAIDA TOTAL DE INTERNET EN SEDE",
+      "causas_probables":["Falla ISP","Router congelado","AP saturado"],
+      "categoria":"Conectividad/Internet",
+      "prioridad":"ALTA",
+      "responsable":"TI",
+      "area_apoyo":["Sede"],
+      "acciones":[
+        "Reportar de inmediato la novedad al equipo de TI, Andres Segura",
+        "radicar Ticket en la mesa de ayuda",
+        "Reportar la novedad al lider y analista administrativo"
+      ],
+      "evidencias":["Número de radicado generado en la mesa de ayuda"],
+      "sla_h":4,
+      "escalamiento":"TI → Proveedor (Andrés) → ISP",
+      "sedes_afectadas":["Mazurén","Plaza Claro","Colina","Chapinero","Javeriana","Cedritos","Modelia"],
+      "palabras_clave":["internet","red","wifi","wi-fi","intermitente","lento","sin red","caído","caido","desconectado","router","módem","modem","ont","ap","access point","repetidor","dns","portal cautivo","firewall","ping","latencia","sin conexión","no conecta"]
+    },
+    {
+      "id":"ACCESOS Y TALANQUERAS",
+      "sistema":"Accesos/Torniquetes & Biométricos",
+      "sintoma":"ACCESOS Y TALANQUERAS",
+      "causas_probables":["Sin comunicación con software","Falla en lector","Fuente de poder"],
+      "categoria":"Accesos/Torniquetes & Biométricos",
+      "prioridad":"ALTA",
+      "responsable":"TI",
+      "area_apoyo":["Sede"],
+      "acciones":[
+         "Reportar de inmediato la novedad al equipo de TI, Andres Segura",
+        "radicar Ticket en la mesa de ayuda",
+        "Reportar la novedad al lider y analista administratIvo"
+      ],
+      "evidencias":["Video del torniquete","Log del software","Número de serie del equipo"],
+      "sla_h":8,
+      "escalamiento":"TI → Proveedor torniquetes",
+      "sedes_afectadas":["Plaza Claro","Javeriana","Mazurén"],
+      "palabras_clave":["torniquete","molinetes","lector","acceso","biométrico","biometrico","huella","lector de huella","tarjeta","carnet","no da acceso","no abre","no permite ingreso","no gira"]
+    },
+    {
+      "id":"ADMINISTRACIÓN DE DATOS",
+      "sistema":"Accesos/Torniquetes & Biométricos",
+      "sintoma":"ADMINISTRACIÓN DE DATOS",
+      "causas_probables":["Sin comunicación con software","Falla en lector","Fuente de poder"],
+      "categoria":"Administración de datos",
+      "prioridad":"ALTA",
+      "responsable":"TI",
+      "area_apoyo":["Sede"],
+      "acciones":[
+         "Reportar de inmediato la novedad al equipo de TI, Andres Segura",
+        "radicar Ticket en la mesa de ayuda",
+        "Reportar la novedad al lider y analista administratIvo"
+      ],
+      "evidencias":["Número de radicado generado en la mesa de ayuda"],
+      "sla_h":8,
+      "escalamiento":"TI → Proveedor torniquetes",
+      "sedes_afectadas":["Plaza Claro","Javeriana","Mazurén"],
+      "palabras_clave":["datos","Dato","copias","limpieza"]
+    },
+    {
+      "id":"AUDIO Y VIDEO",
+      "sistema":"Todo lo relacionado a fallas o requerimientos con equipos, consolas de audio y video",
+      "sintoma":"AUDIO Y VIDEO",
+      "causas_probables":["Sin comunicación con software","Falla en lector","Fuente de poder"],
+      "categoria":"AUDIO Y VIDEO",
+      "prioridad":"ALTA",
+      "responsable":"TI",
+      "area_apoyo":["Sede"],
+      "acciones":[
+         "Reportar de inmediato la novedad al equipo de TI, Andres Segura",
+        "radicar Ticket en la mesa de ayuda",
+        "Reportar la novedad al lider y analista administratIvo"
+      ],
+      "evidencias":["Número de radicado generado en la mesa de ayuda"],
+      "sla_h":8,
+      "escalamiento":"TI → Proveedor torniquetes",
+      "sedes_afectadas":["Plaza Claro","Javeriana","Mazurén"],
+      "palabras_clave":["audio","video","consola"]
+    },
+    {
+      "id":"CÁMARAS - CCTV",
+      "sistema":"Requerimientos de registro de videos, grabaciones o fallas de cámaras o DVR",
+      "sintoma":"CÁMARAS - CCTV",
+      "causas_probables":["Sin comunicación con software","Falla en lector","Fuente de poder"],
+      "categoria":"CÁMARAS - CCTV",
+      "prioridad":"ALTA",
+      "responsable":"TI",
+      "area_apoyo":["Sede"],
+      "acciones":[
+         "Reportar de inmediato la novedad al equipo de TI, Andres Segura",
+        "radicar Ticket en la mesa de ayuda",
+        "Reportar la novedad al lider y analista administratIvo"
+      ],
+      "evidencias":["Número de radicado generado en la mesa de ayuda"],
+      "sla_h":4,
+      "escalamiento":"TI → Proveedor torniquetes",
+      "sedes_afectadas":["Plaza Claro","Javeriana","Mazurén"],
+      "palabras_clave":["videos","grabaciones","camaras","cámaras","DVR"]
+    },
+    {
+      "id":"EMAIL",
+      "sistema":"Servicios relacionados con el correo electrónico",
+      "sintoma":"EMAIL",
+      "causas_probables":["Sin comunicación con software","Falla en lector","Fuente de poder"],
+      "categoria":"EMAIL",
+      "prioridad":"ALTA",
+      "responsable":"TI",
+      "area_apoyo":["Sede"],
+      "acciones":[
+         "Reportar de inmediato la novedad al equipo de TI, Andres Segura",
+        "radicar Ticket en la mesa de ayuda",
+        "Reportar la novedad al lider y analista administratIvo"
+      ],
+      "evidencias":["Número de radicado generado en la mesa de ayuda"],
+      "sla_h":4,
+      "escalamiento":"TI → Proveedor torniquetes",
+      "sedes_afectadas":["Plaza Claro","Javeriana","Mazurén"],
+      "palabras_clave":["correo","email","cuenta","electrónico","eliminar"]
+    },
+    {
+      "id":"GESTION DE USUARIOS",
+      "sistema":"Configuración de accesos, Fallas en los registros e inicio de sesión de aplicativos",
+      "sintoma":"GESTION DE USUARIOS",
+      "causas_probables":["Sin comunicación con software","Falla en lector","Fuente de poder"],
+      "categoria":"EMAIL",
+      "prioridad":"ALTA",
+      "responsable":"TI",
+      "area_apoyo":["Sede"],
+      "acciones":[
+         "Reportar de inmediato la novedad al equipo de TI, Andres Segura",
+        "radicar Ticket en la mesa de ayuda",
+        "Reportar la novedad al lider y analista administratIvo"
+      ],
+      "evidencias":["Número de radicado generado en la mesa de ayuda"],
+      "sla_h":4,
+      "escalamiento":"TI → Proveedor torniquetes",
+      "sedes_afectadas":["Plaza Claro","Javeriana","Mazurén"],
+      "palabras_clave":["sesion","aplicativos"]
+    },
+    {
+      "id":"HARDWARE - EQUIPOS FÍSICOS",
+      "sistema":"Soporte a Equipos de computo, actualización de la RAM, cambio, reemplazo",
+      "sintoma":"HARDWARE - EQUIPOS FÍSICOS",
+      "causas_probables":["Sin comunicación con software","Falla en lector","Fuente de poder"],
+      "categoria":"HARDWARE",
+      "prioridad":"MEDIA",
+      "responsable":"TI",
+      "area_apoyo":["Sede"],
+      "acciones":[
+         "Reportar de inmediato la novedad al equipo de TI, Andres Segura",
+        "radicar Ticket en la mesa de ayuda",
+        "Reportar la novedad al lider y analista administratIvo"
+      ],
+      "evidencias":["Número de radicado generado en la mesa de ayuda"],
+      "sla_h":8,
+      "escalamiento":"TI → Proveedor torniquetes",
+      "sedes_afectadas":["Plaza Claro","Javeriana","Mazurén"],
+      "palabras_clave":["equipo","compra","mantenimiento","actualización"]
+    },
+    {
+      "id":"SOFTWARE",
+      "sistema":"Los servicios relacionados con la instalación/desinstalación de SOFTWARE",
+      "sintoma":"SOFTWARE",
+      "causas_probables":["Sin comunicación con software","Falla en lector","Fuente de poder"],
+      "categoria":"SOFTWARE",
+      "prioridad":"MEDIA",
+      "responsable":"TI",
+      "area_apoyo":["Sede"],
+      "acciones":[
+         "Reportar de inmediato la novedad al equipo de TI, Andres Segura",
+        "radicar Ticket en la mesa de ayuda",
+        "Reportar la novedad al lider y analista administratIvo"
+      ],
+      "evidencias":["Número de radicado generado en la mesa de ayuda"],
+      "sla_h":8,
+      "escalamiento":"TI → Proveedor torniquetes",
+      "sedes_afectadas":["Plaza Claro","Javeriana","Mazurén"],
+      "palabras_clave":["instalación","desinstalación","software","licencia","actualización"]
+    }
+  ]
+}
+  </script>
+
+  <script>
+  // Utilidades
+  const $ = (sel)=>document.querySelector(sel);
+  const $$ = (sel)=>Array.from(document.querySelectorAll(sel));
+  const state = { q:"" };
+
+  // Cargar datos y sanitizar vista del JSON (oculta 'sedes' y 'sedes_afectadas')
+  const RAW = JSON.parse(document.getElementById('data').textContent);
+  const DATA = RAW; // seguimos usando el original internamente
+  function sanitizeForPreview(x){
+    if (Array.isArray(x)) return x.map(sanitizeForPreview);
+    if (x && typeof x === 'object'){
+      const out = {};
+      for (const k in x){
+        if (k === 'sedes' || k === 'sedes_afectadas') continue;
+        out[k] = sanitizeForPreview(x[k]);
+      }
+      return out;
+    }
+    return x;
+  }
+
+  // Búsqueda
+  $('#q').addEventListener('input', e=>{state.q=e.target.value.toLowerCase(); render()});
+  window.addEventListener('keydown', (ev)=>{ if(ev.key==='/' && document.activeElement!==$('#q')){ ev.preventDefault(); $('#q').focus(); }});
+
+  // Modal helpers
+  function openModal(title, bodyHTML, footerHTML){
+    $('#modalTitle').textContent = title;
+    $('#modalBody').innerHTML = bodyHTML;
+    $('#modalFooter').innerHTML = footerHTML || '';
+    $('#modal').style.display = 'grid';
+    document.addEventListener('keydown', escCloseOnce);
+  }
+  function closeModal(){ $('#modal').style.display = 'none'; document.removeEventListener('keydown', escCloseOnce); }
+  function escCloseOnce(ev){ if(ev.key==='Escape'){ closeModal(); } }
+
+  // Descarga genérica
+  function download(filename, content, type){
+    const blob = new Blob([content], {type: type || 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+  }
+
+  // Checklist (versión Sede, resumido)
+  function openChecklist(id){
+    const e = DATA.escenarios.find(x=>x.id===id); if(!e) return;
+    const owner = lookupOwner(e.responsable)||{};
+    const isTI = e.responsable==='TI';
+    const isFB = e.responsable==='FB';
+    const helpLink = isTI ? (owner.mesa_ayuda||'https://w4singenieria.com.co/') : (isFB ? (owner.mesa_ayuda||'https://soportedtg.zohodesk.com/portal/es/home') : '');
+
+    const baseEvid = (e.evidencias||[]).join('; ');
+    const items = [
+      (isTI? 'Verificar rápidamente el síntoma (1 prueba: otro equipo/usuario o reinicio básico).' :
+        (isFB? 'Confirmar el caso con el cliente (repetir acción una vez; validar usuario).' :
+               'Confirmar el síntoma una vez (sin cambios técnicos).')),
+      'Reunir evidencias: ' + (baseEvid || 'pantallazo/foto, hora exacta y responsable en turno.'),
+      (isTI? 'Radicar ticket en **Mesa de Ayuda TI** con ID del caso y evidencias.' :
+        (isFB? 'Radicar ticket en **Mesa de Ayuda FB** (SLA 6h) con ID del caso y evidencias.' :
+               'Registrar la novedad al área responsable con ID del caso y evidencias.')),
+      'Notificar al equipo interno que el ticket fue radicado y dejar observación del turno.'
+    ];
+
+    let checks = [];
+    try{ checks = JSON.parse(localStorage.getItem('chk_'+id) || '[]'); }catch(_){ checks = []; }
+    if(!Array.isArray(checks)) checks = [];
+
+    const renderItems = ()=> items.map((a,i)=>'<label><input type="checkbox" data-idx="'+i+'" '+(checks[i]?'checked':'')+'> '+a+'</label>').join('');
+
+    const body = '<div class="help">Caso: <b>'+e.id+'</b> • '+e.sistema+' • Prioridad <b>'+e.prioridad+
+      '</b> • SLA <b>'+ (e.sla_h || owner.sla_h || '-') +'h</b></div>'+
+      '<div class="section checklist" id="chkList">'+ renderItems() +'</div>'+
+      '<div class="help" id="chkProgress"></div>';
+
+    const footer = (helpLink?'<a class="ghost" href="'+helpLink+'" target="_blank" rel="noopener">Abrir mesa de ayuda</a>':'')+
+                   '<button class="ghost" id="markAll">Marcar todo</button>'+
+                   '<button class="ghost" id="clearAll">Limpiar</button>';
+
+    openModal('Checklist — (Sede) '+e.sintoma, body, footer);
+
+    function updateProgress(){ const done = checks.filter(Boolean).length; $('#chkProgress').textContent = done+'/'+items.length+' completado'; }
+    updateProgress();
+
+    $('#chkList').addEventListener('change', (ev)=>{
+      if(ev.target && ev.target.matches('input[type=checkbox]')){
+        const idx = +ev.target.getAttribute('data-idx');
+        checks[idx] = ev.target.checked;
+        localStorage.setItem('chk_'+id, JSON.stringify(checks));
+        updateProgress();
+      }
+    });
+    $('#markAll').onclick = ()=>{
+      checks = items.map(()=>true); localStorage.setItem('chk_'+id, JSON.stringify(checks));
+      $('#chkList').innerHTML = renderItems(); updateProgress();
+    };
+    $('#clearAll').onclick = ()=>{
+      checks = items.map(()=>false); localStorage.setItem('chk_'+id, JSON.stringify(checks));
+      $('#chkList').innerHTML = renderItems(); updateProgress();
+    };
+  }
+
+  // SOP (descarga .MD + enlace mesa de ayuda)
+  function openSOP(id){
+    var e = DATA.escenarios.find(function(x){ return x.id===id; }); if(!e) return;
+    var owner = lookupOwner(e.responsable) || {};
+    var accionesMd = (e.acciones||[]).map(function(a,i){ return (i+1)+'. '+a; }).join('\n');
+    var evidMd     = (e.evidencias||[]).map(function(a){ return '- '+a; }).join('\n');
+
+    var md = '# SOP — '+e.sintoma+' ('+e.id+')\n\n'
+           + '**Sistema:** '+e.sistema+'\n'
+           + '**Categoría:** '+e.categoria+'\n'
+           + '**Responsable:** '+(owner.nombre||e.responsable)+'\n'
+           + '**SLA:** '+((e.sla_h || owner.sla_h || '-')+'h')+'\n'
+           + '**Escalamiento:** '+(e.escalamiento || owner.escala_a || '-')+'\n\n'
+           + '## Acciones\n'+accionesMd+'\n\n'
+           + '## Evidencias requeridas\n'+evidMd+'\n';
+
+    var accionesHtml = (e.acciones||[]).map(function(a){ return '<li>'+a+'</li>'; }).join('');
+    var evidHtml     = (e.evidencias||[]).map(function(a){ return '<li>'+a+'</li>'; }).join('');
+
+    var body = '<div class="help">Guía generada automáticamente. Personaliza según Stark.</div>'
+      + '<div class="section"><table class="table">'
+      + '<tr><th>Sistema</th><td>'+e.sistema+'</td></tr>'
+      + '<tr><th>Categoría</th><td>'+e.categoria+'</td></tr>'
+      + '<tr><th>Responsable</th><td>'+(owner.nombre||e.responsable)+'</td></tr>'
+      + '<tr><th>SLA</th><td>'+(e.sla_h || owner.sla_h || '-')+' h</td></tr>'
+      + '<tr><th>Escalamiento</th><td>'+(e.escalamiento || owner.escala_a || '-')+'</td></tr>'
+      + '</table></div>'
+      + '<div class="section"><strong>Paso a paso sugerido</strong><ol>'+accionesHtml+'</ol></div>'
+      + '<div class="section"><strong>Evidencias requeridas</strong><ul>'+evidHtml+'</ul></div>';
+
+    var helpLink = '';
+    if(e.responsable==='TI'){ helpLink = owner.mesa_ayuda || 'https://w4singenieria.com.co/'; }
+    else if(e.responsable==='FB'){ helpLink = owner.mesa_ayuda || 'https://soportedtg.zohodesk.com/portal/es/home'; }
+
+    var footer = '';
+    if(helpLink){ footer += '<a class="ghost" href="'+helpLink+'" target="_blank" rel="noopener">Abrir mesa de ayuda</a>'; }
+    footer += '<button class="primary" id="sopDownload">Descargar .MD</button>';
+
+    openModal('SOP — '+e.sintoma, body, footer);
+    $('#sopDownload').onclick = function(){ download('SOP_'+e.id+'.md', md, 'text/markdown'); };
+  }
+
+  // Helpers
+  function lookupOwner(id){ return DATA.responsables.find(r=>r.id===id); }
+
+  // Filtrado (sin sedes)
+  function filtered(){
+    return DATA.escenarios.filter(e=>{
+      if(!state.q) return true;
+      const q = state.q;
+      const hay = (txt)=> (txt||'').toString().toLowerCase().includes(q);
+      const arr = (a)=> (a||[]).some(x=>hay(x));
+      return hay(e.id)||hay(e.sistema)||hay(e.categoria)||hay(e.sintoma)||hay(e.prioridad)||
+             hay(e.responsable)||arr(e.causas_probables)||arr(e.acciones)||arr(e.evidencias)||
+             arr(e.palabras_clave);
+    });
+  }
+
+  // Tarjeta (sin sedes)
+  function card(e){
+    const owner = lookupOwner(e.responsable) || {nombre:e.responsable, contacto:'', sla_h:e.sla_h};
+    const sla = e.sla_h || owner.sla_h || '';
+    const helpdeskTI = (e.responsable==='TI') ? (owner.mesa_ayuda || 'https://w4singenieria.com.co/') : '';
+    const helpdeskFB = (e.responsable==='FB') ? (owner.mesa_ayuda || 'https://soportedtg.zohodesk.com/portal/es/home') : '';
+
+    return `
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-weight:700;font-size:16px">${e.sintoma}</div>
+          <div class="subtitle">${e.sistema} • <span class="hl">${e.categoria}</span></div>
+        </div>
+        <div class="meta">
+          <span class="badge prio-${e.prioridad}">Prioridad: ${e.prioridad}</span>
+          ${sla?`<span class="badge sla">SLA: ${sla}h</span>`:''}
+        </div>
+      </div>
+
+      <div class="meta" style="margin-top:12px">
+        <span class="tag"><span class="sw" style="background:var(--accent)"></span> Responsable: ${owner.nombre}</span>
+        ${owner.contacto?`<span class="tag"><span class="sw" style="background:var(--accent-2)"></span> Contacto: ${owner.contacto}</span>`:''}
+        <span class="tag"><span class="sw" style="background:#8a90a0"></span> Escala: ${e.escalamiento||owner.escala_a||'—'}</span>
+      </div>
+
+      <div class="grid" style="margin-top:12px">
+        <div class="card" style="background:#121521">
+          <strong>Acciones sugeridas</strong>
+          <ul>${e.acciones.map(a=>`<li>${a}</li>`).join('')}</ul>
+        </div>
+        <div class="card" style="background:#121521">
+          <strong>Evidencias requeridas</strong>
+          <ul>${e.evidencias.map(a=>`<li>${a}</li>`).join('')}</ul>
+        </div>
+      </div>
+
+      <div class="row" style="justify-content:flex-end;margin-top:10px">
+        <div class="actions">
+          <button class="ghost" onclick="openChecklist('${e.id}')">Checklist</button>
+          <button class="ghost" onclick="openSOP('${e.id}')">SOP</button>
+          ${helpdeskTI?`<a class="primary" href="${helpdeskTI}" target="_blank" rel="noopener">Radicar ticket TI</a>`:''}
+          ${helpdeskFB?`<a class="primary" href="${helpdeskFB}" target="_blank" rel="noopener">Radicar ticket FB</a>`:''}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function render(){
+    const list = filtered();
+    $('#cards').innerHTML = list.map(card).join('');
+    $('#empty').style.display = list.length? 'none' : 'block';
+  }
+  render();
+  </script>
+</body>
+</html>
